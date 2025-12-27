@@ -299,3 +299,5 @@ defaults:
       layout: single
       author_profile: true
 
+custom_css:
+  - _sass/custom.scss

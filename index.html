@@ -17,3 +17,75 @@ profile:
 projects:
 ---
 {% include feature_row id="profile" type="left" %}
+
+<section class="chatbot-section">
+  <h2>Chat with Me</h2>
+  <p class="chatbot-hint">
+    Ask me something about my background, projects, or interests.
+  </p>
+
+  <div id="chat-window"></div>
+
+  <div class="chat-input-row">
+    <input
+      id="chat-input"
+      type="text"
+      placeholder="Ask me something…"
+      onkeydown="if(event.key==='Enter') sendMessage()"
+    />
+    <button onclick="sendMessage()">Send</button>
+  </div>
+</section>
+
+<script>
+const chatWindow = document.getElementById("chat-window");
+
+function appendMessage(sender, text) {
+  const msg = document.createElement("div");
+  msg.className = sender === "user" ? "chat-msg user" : "chat-msg bot";
+  msg.innerHTML = `<strong>${sender === "user" ? "You" : "Vincent"}:</strong> ${text}`;
+  chatWindow.appendChild(msg);
+  chatWindow.scrollTop = chatWindow.scrollHeight;
+}
+
+async function sendMessage() {
+  const input = document.getElementById("chat-input");
+  const message = input.value.trim();
+  if (!message) return;
+
+  appendMessage("user", message);
+  input.value = "";
+
+  appendMessage("bot", "<em>Thinking…</em>");
+
+  try {
+    const res = await fetch("https://hf-chat-proxy.anc956467v.workers.dev", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message })
+    });
+
+    // Remove "Thinking…" message early if you want
+    chatWindow.removeChild(chatWindow.lastChild);
+
+    if (!res.ok) {
+      const text = await res.text(); // worker may not return JSON
+      appendMessage(
+        "bot",
+        `API error (${res.status}): ${text || res.statusText}`
+      );
+      return;
+    }
+
+    const data = await res.json();
+    const reply = data.answer ?? "I don't know.";
+
+    appendMessage("bot", reply);
+
+  } catch (err) {
+    // Network / CORS / parsing errors
+    chatWindow.removeChild(chatWindow.lastChild);
+    appendMessage("bot", `Network error: ${err.message}`);
+  }
+}
+</script>
