@@ -19,9 +19,9 @@ projects:
 {% include feature_row id="profile" type="left" %}
 
 <section class="chatbot-section">
-  <h2>Chat with Me</h2>
+  <h2>Chat with Vincent (AI)</h2>
   <p class="chatbot-hint">
-    Ask me something about my background, projects, or interests.
+    - A lightweight AI model that can answer questions about me. <br />
   </p>
 
   <div id="chat-window"></div>
@@ -39,6 +39,7 @@ projects:
 
 <script>
 const chatWindow = document.getElementById("chat-window");
+appendMessage("bot", "Hi! I’m an AI version of Vincent. You can ask me about my studies, projects 🙂");
 
 function appendMessage(sender, text) {
   const msg = document.createElement("div");
@@ -78,7 +79,12 @@ async function sendMessage() {
     }
 
     const data = await res.json();
-    const reply = data.answer ?? "I don't know.";
+    // When API server is starting up after scale-to-zero, it may return 200 but no answer
+    if (!data.answer) {
+      appendMessage("bot", "The AI model is still starting up. Please try again in 30 seconds.");
+      return;
+    }
+    const reply = data.answer;
 
     appendMessage("bot", reply);
 
